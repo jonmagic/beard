@@ -46,6 +46,7 @@ fi
 /bin/cp "$PROJECT_DIR/README.md" "$PAYLOAD_DIR/README.md"
 /bin/cp "$PROJECT_DIR/LICENSE" "$PAYLOAD_DIR/LICENSE"
 /bin/cp "$PROJECT_DIR/CHANGELOG.md" "$PAYLOAD_DIR/CHANGELOG.md"
+/bin/cp "$PROJECT_DIR/docs/README.md" "$PAYLOAD_DIR/docs/README.md"
 /bin/cp "$PROJECT_DIR/docs/user-guide.md" "$PAYLOAD_DIR/docs/user-guide.md"
 /bin/cp "$PROJECT_DIR/prompts/local-agent-battery-coach.md" "$PAYLOAD_DIR/prompts/local-agent-battery-coach.md"
 /bin/cp "$PROJECT_DIR/rules/beard-rules.json" "$PAYLOAD_DIR/rules/beard-rules.json"

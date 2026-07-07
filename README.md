@@ -50,7 +50,7 @@ For deeper Apple Energy Impact data, `powermetrics --show-process-energy` exists
 
 Suggestions come from category rules rather than one-off app logic. Beard ships embedded defaults for common categories like browser, containers/VMs, developer tools, chat/calls, media, security tooling, display, and sync/storage. JSON reports include `category` and `categoryName` for each app/process group when a rule matches.
 
-To customize suggestions, copy `rules/beard-rules.json` to `~/.config/beard/rules.json` and edit or add category rules. User rules overlay Beard's embedded defaults by `id`, so you can add your own apps without losing future built-in categories. Use `--rules PATH` when testing a rules file explicitly.
+To customize suggestions, create `~/.config/beard/rules.json` with one or more category rules. User rules overlay Beard's embedded defaults by `id`, so you can add your own apps without losing future built-in categories. See the [user guide](docs/user-guide.md#customize-suggestion-rules) for the JSON format and a copy-paste example.
 
 ## Development
 
@@ -65,6 +65,7 @@ swift run beard report --rules rules/beard-rules.json
 
 ## Documentation
 
+- [Docs overview](docs/README.md)
 - [User guide](docs/user-guide.md)
 - [Release guide](docs/releasing.md)
 - [Changelog](CHANGELOG.md)

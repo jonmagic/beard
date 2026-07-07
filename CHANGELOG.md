@@ -7,6 +7,7 @@
 - Added category metadata to JSON reports so agents can provide richer coaching.
 - Added `--rules PATH`, `BEARD_RULES_PATH`, and `~/.config/beard/rules.json` support for custom rule overlays.
 - Added `rules/beard-rules.json` as the editable starting point for custom rules.
+- Added copy-paste custom rules documentation and a docs overview.
 
 ## 1.0.3 - New-user coaching docs
 

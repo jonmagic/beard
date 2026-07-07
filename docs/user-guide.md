@@ -65,14 +65,50 @@ In text output, categories appear next to the app name, such as `OrbStack [conta
 
 ## Customize suggestion rules
 
-Beard has embedded defaults, so it still works if no rules file exists. To customize the advice for your own apps, start from the built-in rules file:
+Beard has embedded defaults, so it still works if no rules file exists. Custom rules live at:
+
+```text
+~/.config/beard/rules.json
+```
+
+Create a minimal rules file like this:
 
 ```sh
 mkdir -p ~/.config/beard
-cp rules/beard-rules.json ~/.config/beard/rules.json
+cat > ~/.config/beard/rules.json <<'JSON'
+{
+  "schemaVersion": 1,
+  "categories": [
+    {
+      "id": "my-custom-apps",
+      "name": "My custom apps",
+      "exactMatches": [
+        "MyBatteryHog"
+      ],
+      "containsMatches": [
+        "my-background-helper"
+      ],
+      "suggestion": "{app} is using high current impact (power {power}, CPU {cpu}%). Pause this custom app or its helper when you are on battery."
+    }
+  ]
+}
+JSON
 ```
 
-Then edit `~/.config/beard/rules.json`. A category rule has an `id`, display `name`, `exactMatches`, `containsMatches`, and a `suggestion` template. Templates can use `{app}`, `{power}`, and `{cpu}`.
+The file format is JSON:
+
+- `schemaVersion`: currently `1`.
+- `highImpactThreshold`: optional number. Defaults to Beard's built-in threshold.
+- `genericSuggestion`: optional fallback template for uncategorized apps.
+- `categories`: optional array of category rules.
+
+A category rule has:
+
+- `id`: stable machine-readable category id.
+- `name`: human-readable category name.
+- `exactMatches`: app/process names that must match exactly, case-insensitively.
+- `containsMatches`: app/process substrings, case-insensitively. Prefer specific terms like `my-background-helper` over short words like `go` or `app`.
+- `suggestion`: template text. Supported placeholders are `{app}`, `{power}`, and `{cpu}`.
 
 User rules overlay Beard's embedded defaults by `id`. If your auto-loaded `~/.config/beard/rules.json` is invalid, Beard warns on stderr and falls back to embedded defaults so reports keep working. If you pass a rules file explicitly, invalid rules fail fast:
 
@@ -80,6 +116,8 @@ User rules overlay Beard's embedded defaults by `id`. If your auto-loaded `~/.co
 beard report --rules ~/.config/beard/rules.json
 BEARD_RULES_PATH=~/.config/beard/rules.json beard report
 ```
+
+The full built-in rules file is available in the source repository and in the zip release as `rules/beard-rules.json`, but you do not need to copy it just to add one custom category.
 
 ## Instruct your agent to make Beard feel always-on
 
