@@ -34,8 +34,6 @@ Commands:
 5. Report smoke check: `swift run beard report --limit 5`
 6. Package signed local release: `scripts/package-release`
 7. Package notarized installer release: `scripts/package-notarized-pkg`
-8. Install 15-minute relay updates: `scripts/install-launch-agent`
-9. Uninstall relay updates: `scripts/uninstall-launch-agent`
 
 There is no separate lint or formatter command wired in this repo yet.
 
@@ -58,11 +56,7 @@ The CLI intentionally stays unprivileged. It uses `top` relative power and CPU c
 
 Output can include local process names and PIDs. Keep reports local unless jonmagic explicitly asks to save or share them.
 
-The launchd relay runner no-ops on AC Power. On battery power, it sends Beard JSON output through the configured `llm` CLI and then enqueues a Tri-State Relay Service message. Treat that as an intentional user-approved external/model boundary, keep `llm --no-log`, and avoid adding raw report dumps to relay messages.
-
-The relay runner writes only a capped local log at `~/Library/Logs/beard/battery-relay.log`; do not add unbounded persisted state for scheduled battery data.
-
-The launchd job uses `.build/release/beard`; rebuild or rerun `scripts/install-launch-agent` after source changes so scheduled output matches the latest code.
+Beard should not install or own background scheduling. Keep recurring checks in the user's local agent, scheduler, or operating environment. `prompts/local-agent-battery-coach.md` is the supported handoff for spoken coaching loops using `llm`, `say`, `relay`, or another local notifier.
 
 `VERSION` and `Sources/beard/Version.swift` must stay aligned for releases. `scripts/package-release` builds, signs, verifies, and writes the local zip archive under `dist/`. `scripts/package-notarized-pkg` builds, signs, notarizes, staples, validates, and writes the Gatekeeper-friendly installer package under `dist/`.
 

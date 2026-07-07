@@ -25,10 +25,8 @@ Use this skill for repeated project work that benefits from focused guidance bey
 2. CLI behavior changes should run `swift run beard --help` and a focused `swift run beard report --limit 5` smoke check.
 3. Do not represent relative power as watts, watt-hours, or exact battery drain.
 4. Keep command execution local, unprivileged, and shell-free unless jonmagic explicitly approves a privileged diagnostic.
-5. Launchd relay changes should lint the plist with `plutil -lint`, run `bash -n` on shell scripts, and confirm `launchctl print gui/$(id -u)/com.jonmagic.beard-battery-relay` after install.
-6. The launchd relay runner should no-op when `pmset` reports AC Power unless `BEARD_RELAY_RUN_ON_AC=1` is set for explicit testing.
-7. Keep scheduled logs bounded. The battery relay log is capped at `~/Library/Logs/beard/battery-relay.log`.
-8. Release changes should keep `VERSION`, `Sources/beard/Version.swift`, `CHANGELOG.md`, docs, and the signed `scripts/package-release` / notarized `scripts/package-notarized-pkg` outputs aligned.
+5. Do not add Beard-owned launchd jobs, background schedulers, or automatic spoken-update scripts. Keep recurring coaching in the user's local agent or scheduler.
+6. Release changes should keep `VERSION`, `Sources/beard/Version.swift`, `CHANGELOG.md`, docs, and the signed `scripts/package-release` / notarized `scripts/package-notarized-pkg` outputs aligned.
 
 ## Quality Loop
 

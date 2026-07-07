@@ -1,10 +1,15 @@
 # Changelog
 
+## 1.0.1 - Installed binary docs
+
+- Updated the README and user guide to make installed `beard` commands the primary user path.
+- Kept `swift run beard` examples scoped to source-development workflows.
+- Removed Beard-owned LaunchAgent automation and replaced it with a local-agent prompt.
+
 ## 1.0.0 - Initial release
 
 - Shipped the native Swift `beard` CLI for local macOS battery impact reports.
 - Added text and JSON reports with battery state, Low Power Mode, display sleep, top app/process impact, and safe recommendations.
 - Added unprivileged sampling through Apple command-line tools: `pmset`, `top`, and `ps`.
-- Added a 15-minute LaunchAgent that summarizes Beard output through Simon Willison's `llm` CLI and sends spoken updates through Tri-State Relay Service.
-- Made the LaunchAgent no-op while the Mac is plugged into AC power.
+- Added a first-pass 15-minute LaunchAgent experiment for local spoken coaching through Simon Willison's `llm` CLI and Tri-State Relay Service.
 - Added ISC licensing, user documentation, and signed/notarized macOS arm64 release artifact workflows.

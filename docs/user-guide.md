@@ -1,6 +1,6 @@
 # Beard User Guide
 
-Beard is a local macOS battery coach. It samples current app/process impact, explains what looks expensive, and can send short spoken coaching updates through Tri-State Relay Service.
+Beard is a local macOS battery coach. It samples current app/process impact and explains what looks expensive. Your local AI agent can use Beard's JSON output to speak short coaching updates through `say`, Tri-State Relay Service, or another local notifier.
 
 The name is a Coach Beard joke: "Battery Coach" made jonmagic think of Beard from *Ted Lasso*.
 
@@ -9,7 +9,7 @@ The name is a Coach Beard joke: "Battery Coach" made jonmagic think of Beard fro
 The easiest path is the notarized installer package:
 
 ```sh
-sudo installer -pkg Beard-1.0.0-macos-arm64.pkg -target /
+sudo installer -pkg Beard-1.0.1-macos-arm64.pkg -target /
 beard --version
 beard report --limit 5
 ```
@@ -21,8 +21,8 @@ The package installs `beard` to `/usr/local/bin/beard`.
 Download the macOS arm64 zip, unzip it, and copy the binary somewhere on your `PATH`.
 
 ```sh
-unzip Beard-1.0.0-macos-arm64.zip
-sudo cp Beard-1.0.0-macos-arm64/beard /usr/local/bin/beard
+unzip Beard-1.0.1-macos-arm64.zip
+sudo cp Beard-1.0.1-macos-arm64/beard /usr/local/bin/beard
 beard --version
 beard report --limit 5
 ```
@@ -32,13 +32,14 @@ The zip release binary is signed with Jonathan Hoyt's Developer ID Application c
 If macOS blocks the binary after download, remove quarantine from the extracted release folder before copying it into place:
 
 ```sh
-xattr -dr com.apple.quarantine Beard-1.0.0-macos-arm64
+xattr -dr com.apple.quarantine Beard-1.0.1-macos-arm64
 ```
 
 ## Run from source
 
 ```sh
 cd ~/code/jonmagic/beard
+swift run beard --version
 swift run beard report --limit 5
 swift run beard report --json --samples 3 --interval 1
 ```
@@ -55,50 +56,30 @@ The top app/process list is best used as a coaching signal:
 - **Microsoft Defender**: check for an active scan or update, but do not disable security tooling just to save battery.
 - **WindowServer**: reduce brightness, disconnect extra displays, or close graphics-heavy windows.
 
-## Spoken battery coaching
+## Spoken battery coaching with your agent
 
-From the source checkout, install the LaunchAgent:
-
-```sh
-cd ~/code/jonmagic/beard
-scripts/install-launch-agent
-```
-
-Every 15 minutes, launchd runs `scripts/beard-battery-relay`. It no-ops when `pmset` reports AC Power, so you only get coaching when the Mac is actually drawing from battery. The script:
+Beard does not install or manage a LaunchAgent. Use your local AI agent or scheduler to decide when to run it. The intended loop is:
 
 1. Runs the release Beard binary with `report --json`.
-2. Sends the JSON report to Simon Willison's `llm` CLI with the prompt in `prompts/battery-relay-update.md`.
-3. Enqueues the short result through the Tri-State Relay Service `relay` CLI.
+2. Summarize the JSON with your chosen local agent or LLM path.
+3. Speak or enqueue the short result through `say`, `relay`, or another local notifier.
 
 Tri-State Relay Service is documented at <https://jonmagic.com/tsrs/>.
 
-Useful checks:
+Use the agent prompt in `prompts/local-agent-battery-coach.md`. A minimal manual version looks like:
 
 ```sh
-launchctl print gui/$(id -u)/com.jonmagic.beard-battery-relay
-tail -50 ~/Library/Logs/beard/battery-relay.log
-```
-
-To stop the scheduled coaching:
-
-```sh
-scripts/uninstall-launch-agent
+beard report --json --samples 2 --interval 1 --limit 8 | llm --no-log -s "Turn this Beard battery report into one short spoken coaching update under 240 characters."
 ```
 
 ## Privacy notes
 
 The CLI itself stays local and writes reports only to stdout. Reports include local process names and PIDs.
 
-The spoken coaching runner intentionally sends Beard JSON output to the configured `llm` provider. It uses `llm --no-log` so the prompt and response are not written to the local `llm` log database. The runner logs only the short relay update, not the raw JSON report, and caps the log at roughly 50 KB.
+If your agent or shell pipeline sends Beard JSON output to an LLM provider, process names and battery state may leave the machine according to that provider's behavior. Use options like `llm --no-log` when available if you do not want prompts and responses written to local tool logs.
 
 ## Troubleshooting
 
-If the scheduled job uses old behavior after code changes, rebuild and reinstall it:
+If `relay` rejects an update, make the spoken text shorter. Tri-State Relay Service currently expects short messages.
 
-```sh
-scripts/install-launch-agent
-```
-
-If `relay` rejects an update, check the log. Beard trims spoken updates below the current Relay message limit.
-
-If `llm` fails, check that the configured model/provider is available. Repeated failure relays are deduplicated so you do not get the same high-priority warning every 15 minutes.
+If `llm` fails, check that the configured model/provider is available.

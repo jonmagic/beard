@@ -8,19 +8,29 @@ The name is a Coach Beard joke. "Battery Coach" immediately made me think of Bea
 
 Source: <https://github.com/jonmagic/beard>
 
+## Install
+
+Download the notarized macOS installer from the latest release, then install it:
+
+```sh
+sudo installer -pkg Beard-1.0.1-macos-arm64.pkg -target /
+```
+
+The installer puts the binary at `/usr/local/bin/beard`.
+
 ## Usage
 
 ```sh
-swift run beard
-swift run beard --version
-swift run beard report --limit 10
-swift run beard report --json --samples 3 --interval 1
+beard
+beard --version
+beard report --limit 10
+beard report --json --samples 3 --interval 1
 ```
 
-Installed binary usage is the same without `swift run`:
+From source, use `swift run` only for development:
 
 ```sh
-beard report
+swift run beard report --limit 5
 ```
 
 ## Commands
@@ -67,33 +77,17 @@ scripts/package-release
 scripts/package-notarized-pkg
 ```
 
-The zip artifact is written to `dist/Beard-1.0.0-macos-arm64.zip` with a matching `.sha256` checksum. The notarized installer is written to `dist/Beard-1.0.0-macos-arm64.pkg` with a matching `.sha256` checksum.
+The zip artifact is written to `dist/Beard-<version>-macos-arm64.zip` with a matching `.sha256` checksum. The notarized installer is written to `dist/Beard-<version>-macos-arm64.pkg` with a matching `.sha256` checksum.
 
 The installer package signs the `beard` binary with Jonathan Hoyt's Developer ID Application certificate, signs the package with the Developer ID Installer certificate, submits it to Apple notarization, staples the accepted ticket, and validates it with Gatekeeper.
 
-## Tri-State Relay battery updates
+## Local agent battery coaching
 
-Beard can install a user LaunchAgent that runs every 15 minutes while the Mac is on battery power, summarizes `beard report --json` through Simon Willison's `llm` CLI with `--no-log`, and enqueues the spoken update through jonmagic's Tri-State Relay Service CLI.
+Beard intentionally does not install a scheduler, background job, or LaunchAgent. It is just the local signal source.
 
-That glue is the point of the project: Beard gathers the local battery/process signal, `llm` turns it into a short coaching note, and Tri-State Relay Service speaks it as a lightweight audio stream. TSRS is described at <https://jonmagic.com/tsrs/>.
+The useful loop is for your local AI agent to run `beard report --json`, summarize it with whatever LLM path you already use, and speak or enqueue the result with your preferred local tool, such as `say` or Tri-State Relay Service. TSRS is described at <https://jonmagic.com/tsrs/>.
 
-```sh
-scripts/install-launch-agent
-scripts/uninstall-launch-agent
-```
-
-The installed job label is `com.jonmagic.beard-battery-relay`. It no-ops when `pmset` reports AC Power, logs to `~/Library/Logs/beard/battery-relay.log`, and caps that log at roughly 50 KB on each run. The prompt lives at `prompts/battery-relay-update.md`.
-
-Useful checks:
-
-```sh
-launchctl print gui/$(id -u)/com.jonmagic.beard-battery-relay
-tail -50 ~/Library/Logs/beard/battery-relay.log
-```
-
-The relay runner sends Beard's JSON report to the configured `llm` CLI provider, so process names and battery state may leave the machine according to that provider's behavior. The `--no-log` flag prevents `llm` from writing the prompt/response to its local log database.
-
-The LaunchAgent uses the release binary at `.build/release/beard`. Re-run `scripts/install-launch-agent` after source changes so the scheduled job uses the latest code.
+Use [`prompts/local-agent-battery-coach.md`](prompts/local-agent-battery-coach.md) as the prompt for that agent. If your agent sends Beard output to an external LLM provider, process names and battery state may leave the machine according to that provider's behavior.
 
 ## License
 
