@@ -1,0 +1,148 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROJECT_DIR="${BEARD_PROJECT_DIR:-/Users/jonmagic/code/jonmagic/beard}"
+STATE_DIR="${BEARD_STATE_DIR:-$HOME/Library/Application Support/beard}"
+LOG_DIR="${BEARD_LOG_DIR:-$HOME/Library/Logs/beard}"
+LOG_FILE="$LOG_DIR/battery-relay.log"
+MAX_LOG_BYTES="${BEARD_LOG_MAX_BYTES:-50000}"
+FAILURE_STATE_FILE="$STATE_DIR/last-failure"
+FAILURE_RELAY_INTERVAL_SECONDS="${BEARD_FAILURE_RELAY_INTERVAL_SECONDS:-21600}"
+
+BEARD_BINARY="${BEARD_BINARY:-$PROJECT_DIR/.build/release/beard}"
+LLM_CLI="${LLM_CLI:-/Users/jonmagic/.dotfiles/bin/llm}"
+RELAY_CLI="${RELAY_CLI:-/usr/local/bin/relay}"
+PROMPT_FILE="${BEARD_RELAY_PROMPT:-$PROJECT_DIR/prompts/battery-relay-update.md}"
+PMSET_CLI="${PMSET_CLI:-/usr/bin/pmset}"
+RUN_ON_AC="${BEARD_RELAY_RUN_ON_AC:-0}"
+
+mkdir -p "$STATE_DIR" "$LOG_DIR"
+
+if [[ -f "$LOG_FILE" ]]; then
+  log_bytes="$(/usr/bin/wc -c < "$LOG_FILE" | /usr/bin/tr -d ' ')"
+  if [[ "$log_bytes" =~ ^[0-9]+$ ]] && (( log_bytes > MAX_LOG_BYTES )); then
+    /usr/bin/tail -c "$MAX_LOG_BYTES" "$LOG_FILE" > "$LOG_FILE.tmp"
+    /bin/mv "$LOG_FILE.tmp" "$LOG_FILE"
+  fi
+fi
+
+exec >> "$LOG_FILE" 2>&1
+
+log() {
+  printf '[%s] %s\n' "$(/bin/date '+%Y-%m-%dT%H:%M:%S%z')" "$*"
+}
+
+trim_for_relay() {
+  /usr/bin/tr '\r\n' ' ' |
+    /usr/bin/sed -E 's/[[:space:]]+/ /g; s/^ //; s/ $//' |
+    /usr/bin/cut -c 1-220
+}
+
+fail_with_relay() {
+  local message="$1"
+  local now
+  local signature
+  local last_signature=""
+  local last_notified_at="0"
+
+  log "ERROR: $message"
+
+  now="$(/bin/date '+%s')"
+  signature="$(printf '%s' "$message" | /usr/bin/shasum | /usr/bin/awk '{print $1}')"
+
+  if [[ -f "$FAILURE_STATE_FILE" ]]; then
+    read -r last_signature last_notified_at < "$FAILURE_STATE_FILE" || true
+  fi
+
+  if [[ "$signature" == "$last_signature" ]] &&
+    [[ "$last_notified_at" =~ ^[0-9]+$ ]] &&
+    (( now - last_notified_at < FAILURE_RELAY_INTERVAL_SECONDS )); then
+    log "suppressing repeated failure relay for $message"
+    exit 1
+  fi
+
+  if [[ -x "$RELAY_CLI" ]]; then
+    alert_message="$(printf 'Beard battery relay failed: %s' "$message" | trim_for_relay)"
+    if "$RELAY_CLI" \
+      --line "beard" \
+      --type update \
+      --priority high \
+      --cwd "$PROJECT_DIR" \
+      --message "$alert_message"; then
+      printf '%s %s\n' "$signature" "$now" > "$FAILURE_STATE_FILE"
+    else
+      log "ERROR: failed to enqueue failure relay"
+    fi
+  fi
+
+  exit 1
+}
+
+require_executable() {
+  local path="$1"
+  local label="$2"
+
+  [[ -x "$path" ]] || fail_with_relay "$label not found or not executable at $path"
+}
+
+require_battery_power() {
+  local power_status
+  local source_line
+
+  power_status="${BEARD_PMSET_BATT_OUTPUT:-}"
+  if [[ -z "$power_status" ]]; then
+    power_status="$("$PMSET_CLI" -g batt)" || fail_with_relay "pmset battery status failed"
+  fi
+
+  source_line="$(printf '%s\n' "$power_status" | /usr/bin/head -1)"
+
+  if [[ "$source_line" == "Now drawing from 'Battery Power'" ]]; then
+    log "power source is Battery Power; continuing"
+    return
+  fi
+
+  if [[ "$RUN_ON_AC" == "1" ]]; then
+    log "power source is not Battery Power but BEARD_RELAY_RUN_ON_AC=1; continuing: $source_line"
+    return
+  fi
+
+  log "power source is not Battery Power; no-op: $source_line"
+  exit 0
+}
+
+log "starting battery relay check"
+
+require_battery_power
+require_executable "$LLM_CLI" "llm CLI"
+require_executable "$RELAY_CLI" "relay CLI"
+[[ -f "$PROMPT_FILE" ]] || fail_with_relay "prompt file missing at $PROMPT_FILE"
+
+if [[ ! -x "$BEARD_BINARY" ]]; then
+  log "release beard binary missing; building"
+  cd "$PROJECT_DIR"
+  /usr/bin/swift build -c release || fail_with_relay "beard release build failed"
+fi
+
+require_executable "$BEARD_BINARY" "beard binary"
+
+report="$("$BEARD_BINARY" report --json --samples 2 --interval 1 --limit 8)" ||
+  fail_with_relay "beard report command failed"
+
+system_prompt="$(/bin/cat "$PROMPT_FILE")"
+
+if ! update="$(printf '%s\n' "$report" | "$LLM_CLI" prompt --no-log --no-stream -s "$system_prompt" | trim_for_relay)"; then
+  fail_with_relay "llm summary command failed"
+fi
+
+[[ -n "$update" ]] || fail_with_relay "llm returned an empty update"
+
+"$RELAY_CLI" \
+    --line "beard" \
+    --type update \
+    --priority normal \
+    --cwd "$PROJECT_DIR" \
+    --message "$update" ||
+  fail_with_relay "relay enqueue failed"
+
+/bin/rm -f "$FAILURE_STATE_FILE"
+log "queued update: $update"

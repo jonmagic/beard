@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROJECT_DIR="${BEARD_PROJECT_DIR:-/Users/jonmagic/code/jonmagic/beard}"
+VERSION_FILE="$PROJECT_DIR/VERSION"
+SIGN_IDENTITY="${BEARD_SIGN_IDENTITY:-Developer ID Application: Jonathan Hoyt (J3536DQT74)}"
+ARCH="${BEARD_RELEASE_ARCH:-arm64}"
+DIST_DIR="$PROJECT_DIR/dist"
+
+[[ -f "$VERSION_FILE" ]] || {
+  echo "missing VERSION file: $VERSION_FILE" >&2
+  exit 1
+}
+
+VERSION="$(/bin/cat "$VERSION_FILE" | /usr/bin/tr -d '[:space:]')"
+[[ -n "$VERSION" ]] || {
+  echo "empty VERSION file" >&2
+  exit 1
+}
+
+ARCHIVE_BASENAME="Beard-$VERSION-macos-$ARCH"
+WORK_DIR="$(/usr/bin/mktemp -d)"
+PAYLOAD_DIR="$WORK_DIR/$ARCHIVE_BASENAME"
+ARCHIVE_PATH="$DIST_DIR/$ARCHIVE_BASENAME.zip"
+CHECKSUM_PATH="$ARCHIVE_PATH.sha256"
+
+cleanup() {
+  /bin/rm -rf "$WORK_DIR"
+}
+trap cleanup EXIT
+
+cd "$PROJECT_DIR"
+
+/usr/bin/swift test
+/usr/bin/swift build -c release
+
+BUILT_VERSION="$("$PROJECT_DIR/.build/release/beard" --version)"
+if [[ "$BUILT_VERSION" != "$VERSION" ]]; then
+  echo "built beard version $BUILT_VERSION does not match VERSION $VERSION" >&2
+  exit 1
+fi
+
+/bin/rm -rf "$PAYLOAD_DIR"
+/bin/mkdir -p "$PAYLOAD_DIR/docs" "$DIST_DIR"
+/usr/bin/install -m 755 "$PROJECT_DIR/.build/release/beard" "$PAYLOAD_DIR/beard"
+/bin/cp "$PROJECT_DIR/README.md" "$PAYLOAD_DIR/README.md"
+/bin/cp "$PROJECT_DIR/LICENSE" "$PAYLOAD_DIR/LICENSE"
+/bin/cp "$PROJECT_DIR/CHANGELOG.md" "$PAYLOAD_DIR/CHANGELOG.md"
+/bin/cp "$PROJECT_DIR/docs/user-guide.md" "$PAYLOAD_DIR/docs/user-guide.md"
+
+/usr/bin/codesign --force --timestamp --options runtime --sign "$SIGN_IDENTITY" "$PAYLOAD_DIR/beard"
+/usr/bin/codesign --verify --verbose=2 "$PAYLOAD_DIR/beard"
+
+/bin/rm -f "$ARCHIVE_PATH" "$CHECKSUM_PATH"
+(
+  cd "$WORK_DIR"
+  /usr/bin/ditto -c -k --norsrc --keepParent "$ARCHIVE_BASENAME" "$ARCHIVE_PATH"
+)
+
+/usr/bin/shasum -a 256 "$ARCHIVE_PATH" > "$CHECKSUM_PATH"
+
+echo "$ARCHIVE_PATH"
+echo "$CHECKSUM_PATH"

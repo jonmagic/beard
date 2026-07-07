@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROJECT_DIR="${BEARD_PROJECT_DIR:-/Users/jonmagic/code/jonmagic/beard}"
+VERSION_FILE="$PROJECT_DIR/VERSION"
+APP_IDENTITY="${BEARD_SIGN_IDENTITY:-Developer ID Application: Jonathan Hoyt (J3536DQT74)}"
+INSTALLER_IDENTITY="${BEARD_INSTALLER_IDENTITY:-Developer ID Installer: Jonathan Hoyt (J3536DQT74)}"
+NOTARY_PROFILE="${BEARD_NOTARYTOOL_PROFILE:-tsrs}"
+PACKAGE_ID="${BEARD_PACKAGE_ID:-com.jonmagic.beard}"
+ARCH="${BEARD_RELEASE_ARCH:-arm64}"
+DIST_DIR="$PROJECT_DIR/dist"
+
+require_identity_prefix() {
+  local identity="$1"
+  local prefix="$2"
+  local variable="$3"
+
+  if [[ "$identity" != "$prefix"* ]]; then
+    echo "$variable must be a $prefix identity" >&2
+    exit 1
+  fi
+}
+
+[[ -f "$VERSION_FILE" ]] || {
+  echo "missing VERSION file: $VERSION_FILE" >&2
+  exit 1
+}
+
+VERSION="$(/bin/cat "$VERSION_FILE" | /usr/bin/tr -d '[:space:]')"
+[[ -n "$VERSION" ]] || {
+  echo "empty VERSION file" >&2
+  exit 1
+}
+
+require_identity_prefix "$APP_IDENTITY" "Developer ID Application:" "BEARD_SIGN_IDENTITY"
+require_identity_prefix "$INSTALLER_IDENTITY" "Developer ID Installer:" "BEARD_INSTALLER_IDENTITY"
+
+WORK_DIR="$(/usr/bin/mktemp -d)"
+STAGE_DIR="$WORK_DIR/stage"
+PKG_PATH="$DIST_DIR/Beard-$VERSION-macos-$ARCH.pkg"
+CHECKSUM_PATH="$PKG_PATH.sha256"
+
+cleanup() {
+  /bin/rm -rf "$WORK_DIR"
+}
+trap cleanup EXIT
+
+cd "$PROJECT_DIR"
+
+/usr/bin/swift test
+/usr/bin/swift build -c release
+
+BUILT_VERSION="$("$PROJECT_DIR/.build/release/beard" --version)"
+if [[ "$BUILT_VERSION" != "$VERSION" ]]; then
+  echo "built beard version $BUILT_VERSION does not match VERSION $VERSION" >&2
+  exit 1
+fi
+
+/bin/mkdir -p "$STAGE_DIR/usr/local/bin" "$DIST_DIR"
+/usr/bin/install -m 755 "$PROJECT_DIR/.build/release/beard" "$STAGE_DIR/usr/local/bin/beard"
+
+/usr/bin/codesign --force --timestamp --options runtime --sign "$APP_IDENTITY" "$STAGE_DIR/usr/local/bin/beard"
+/usr/bin/codesign --verify --strict --verbose=2 "$STAGE_DIR/usr/local/bin/beard"
+/usr/bin/xattr -cr "$STAGE_DIR"
+
+/bin/rm -f "$PKG_PATH" "$CHECKSUM_PATH"
+
+COPYFILE_DISABLE=1 /usr/bin/pkgbuild \
+  --root "$STAGE_DIR" \
+  --identifier "$PACKAGE_ID" \
+  --version "$VERSION" \
+  --install-location "/" \
+  --sign "$INSTALLER_IDENTITY" \
+  "$PKG_PATH"
+
+/usr/sbin/pkgutil --check-signature "$PKG_PATH"
+/usr/bin/xcrun notarytool submit "$PKG_PATH" --keychain-profile "$NOTARY_PROFILE" --wait
+/usr/bin/xcrun stapler staple "$PKG_PATH"
+/usr/bin/xcrun stapler validate "$PKG_PATH"
+/usr/sbin/spctl --assess --type install --verbose=2 "$PKG_PATH"
+
+/usr/bin/shasum -a 256 "$PKG_PATH" > "$CHECKSUM_PATH"
+
+echo "$PKG_PATH"
+echo "$CHECKSUM_PATH"

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+LABEL="com.jonmagic.beard-battery-relay"
+PLIST_DEST="$HOME/Library/LaunchAgents/$LABEL.plist"
+DOMAIN="gui/$(/usr/bin/id -u)"
+
+/bin/launchctl bootout "$DOMAIN" "$PLIST_DEST" >/dev/null 2>&1 || true
+/bin/rm -f "$PLIST_DEST"
+
+echo "Removed $LABEL"
