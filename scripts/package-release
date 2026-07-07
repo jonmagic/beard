@@ -41,13 +41,14 @@ if [[ "$BUILT_VERSION" != "$VERSION" ]]; then
 fi
 
 /bin/rm -rf "$PAYLOAD_DIR"
-/bin/mkdir -p "$PAYLOAD_DIR/docs" "$PAYLOAD_DIR/prompts" "$DIST_DIR"
+/bin/mkdir -p "$PAYLOAD_DIR/docs" "$PAYLOAD_DIR/prompts" "$PAYLOAD_DIR/rules" "$DIST_DIR"
 /usr/bin/install -m 755 "$PROJECT_DIR/.build/release/beard" "$PAYLOAD_DIR/beard"
 /bin/cp "$PROJECT_DIR/README.md" "$PAYLOAD_DIR/README.md"
 /bin/cp "$PROJECT_DIR/LICENSE" "$PAYLOAD_DIR/LICENSE"
 /bin/cp "$PROJECT_DIR/CHANGELOG.md" "$PAYLOAD_DIR/CHANGELOG.md"
 /bin/cp "$PROJECT_DIR/docs/user-guide.md" "$PAYLOAD_DIR/docs/user-guide.md"
 /bin/cp "$PROJECT_DIR/prompts/local-agent-battery-coach.md" "$PAYLOAD_DIR/prompts/local-agent-battery-coach.md"
+/bin/cp "$PROJECT_DIR/rules/beard-rules.json" "$PAYLOAD_DIR/rules/beard-rules.json"
 
 /usr/bin/codesign --force --timestamp --options runtime --sign "$SIGN_IDENTITY" "$PAYLOAD_DIR/beard"
 /usr/bin/codesign --verify --verbose=2 "$PAYLOAD_DIR/beard"

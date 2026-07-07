@@ -20,7 +20,7 @@ dist/Beard-<version>-macos-arm64.pkg
 dist/Beard-<version>-macos-arm64.pkg.sha256
 ```
 
-The zip package script signs the `beard` binary with the local Developer ID Application identity, verifies the signature, and includes `README.md`, `LICENSE`, `CHANGELOG.md`, and `docs/user-guide.md` in the archive.
+The zip package script signs the `beard` binary with the local Developer ID Application identity, verifies the signature, and includes `README.md`, `LICENSE`, `CHANGELOG.md`, `docs/user-guide.md`, `prompts/local-agent-battery-coach.md`, and `rules/beard-rules.json` in the archive.
 
 The notarized package script signs the `beard` binary, builds a signed installer package with the local Developer ID Installer identity, submits the package with `xcrun notarytool`, staples the accepted ticket, validates the stapled package, and writes a checksum.
 

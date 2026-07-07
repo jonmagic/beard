@@ -11,6 +11,7 @@ struct ReportOptions: Codable, Equatable {
     var samples = 2
     var intervalSeconds = 1
     var limit = 8
+    var rulesPath: String? = nil
 }
 
 enum CLI {
@@ -18,7 +19,7 @@ enum CLI {
     Beard monitors local macOS battery impact by app/process.
 
     Usage:
-      beard [report] [--json] [--samples N] [--interval SECONDS] [--limit N]
+      beard [report] [--json] [--samples N] [--interval SECONDS] [--limit N] [--rules PATH]
       beard --help
       beard --version
 
@@ -27,6 +28,7 @@ enum CLI {
       --samples N         Number of usable top samples to collect. Default: 2, range: 1-10.
       --interval SECONDS  Seconds between top samples. Default: 1, range: 1-10.
       --limit N           Number of app/process groups to show. Default: 8, range: 1-25.
+      --rules PATH        Overlay suggestion rules from a JSON file.
 
     Notes:
       Beard uses local Apple command-line tools and prints to stdout only.
@@ -83,6 +85,9 @@ enum CLI {
                 let value = try value(after: arg, in: args, index: index)
                 options.limit = try boundedInteger(value, name: arg, range: 1...25)
                 index += 2
+            case "--rules":
+                options.rulesPath = try value(after: arg, in: args, index: index)
+                index += 2
             default:
                 if arg.hasPrefix("--samples=") {
                     options.samples = try boundedInteger(String(arg.dropFirst("--samples=".count)), name: "--samples", range: 1...10)
@@ -92,6 +97,9 @@ enum CLI {
                     index += 1
                 } else if arg.hasPrefix("--limit=") {
                     options.limit = try boundedInteger(String(arg.dropFirst("--limit=".count)), name: "--limit", range: 1...25)
+                    index += 1
+                } else if arg.hasPrefix("--rules=") {
+                    options.rulesPath = String(arg.dropFirst("--rules=".count))
                     index += 1
                 } else {
                     throw BeardError.usage("unknown option `\(arg)`")

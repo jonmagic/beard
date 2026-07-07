@@ -19,6 +19,7 @@ beard
 beard --version
 beard report --limit 10
 beard report --json --samples 3 --interval 1
+beard report --rules ~/.config/beard/rules.json
 ```
 
 From source, use `swift run` only for development:
@@ -30,7 +31,7 @@ swift run beard report --limit 5
 ## Commands
 
 ```text
-beard [report] [--json] [--samples N] [--interval SECONDS] [--limit N]
+beard [report] [--json] [--samples N] [--interval SECONDS] [--limit N] [--rules PATH]
 beard --help
 beard --version
 ```
@@ -39,12 +40,17 @@ beard --version
 - `--samples` controls usable `top` samples. Beard runs one extra pass, discards the first sample because macOS can report zeroed first-pass counters, and averages observed processes across the remaining samples.
 - `--interval` controls seconds between samples.
 - `--limit` controls how many app/process groups are shown.
+- `--rules` overlays custom suggestion categories from a JSON rules file.
 
 ## What the scores mean
 
 macOS does not expose exact per-app watts or watt-hours through public APIs. Beard reports a relative current impact score from `top` plus CPU percentage, then groups those process samples by responsible app when it can derive one from the process path. On Apple Silicon, that relative power score often tracks CPU impact closely rather than acting as an independent measurement.
 
 For deeper Apple Energy Impact data, `powermetrics --show-process-energy` exists but requires admin privileges. Beard's MVP intentionally stays unprivileged.
+
+Suggestions come from category rules rather than one-off app logic. Beard ships embedded defaults for common categories like browser, containers/VMs, developer tools, chat/calls, media, security tooling, display, and sync/storage. JSON reports include `category` and `categoryName` for each app/process group when a rule matches.
+
+To customize suggestions, copy `rules/beard-rules.json` to `~/.config/beard/rules.json` and edit or add category rules. User rules overlay Beard's embedded defaults by `id`, so you can add your own apps without losing future built-in categories. Use `--rules PATH` when testing a rules file explicitly.
 
 ## Development
 
@@ -54,6 +60,7 @@ swift build
 swift run beard --help
 swift run beard --version
 swift run beard report --limit 5
+swift run beard report --rules rules/beard-rules.json
 ```
 
 ## Documentation
@@ -71,7 +78,7 @@ scripts/package-release
 scripts/package-notarized-pkg
 ```
 
-The zip artifact is written to `dist/Beard-<version>-macos-arm64.zip` with a matching `.sha256` checksum. The notarized installer is written to `dist/Beard-<version>-macos-arm64.pkg` with a matching `.sha256` checksum.
+The zip artifact is written to `dist/Beard-<version>-macos-arm64.zip` with a matching `.sha256` checksum and includes `rules/beard-rules.json` as a customization starting point. The notarized installer is written to `dist/Beard-<version>-macos-arm64.pkg` with a matching `.sha256` checksum.
 
 The installer package signs the `beard` binary with Jonathan Hoyt's Developer ID Application certificate, signs the package with the Developer ID Installer certificate, submits it to Apple notarization, staples the accepted ticket, and validates it with Gatekeeper.
 

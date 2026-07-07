@@ -26,7 +26,8 @@ Use this skill for repeated project work that benefits from focused guidance bey
 3. Do not represent relative power as watts, watt-hours, or exact battery drain.
 4. Keep command execution local, unprivileged, and shell-free unless jonmagic explicitly approves a privileged diagnostic.
 5. Do not add Beard-owned launchd jobs, background schedulers, or automatic spoken-update scripts. Keep recurring coaching in the user's local agent or scheduler.
-6. Release changes should keep `VERSION`, `Sources/beard/Version.swift`, `CHANGELOG.md`, docs, and the signed `scripts/package-release` / notarized `scripts/package-notarized-pkg` outputs aligned.
+6. Suggestion rule changes should update both `rules/beard-rules.json` and the embedded defaults in `Sources/beard/SuggestionRules.swift`; tests must keep them in sync.
+7. Release changes should keep `VERSION`, `Sources/beard/Version.swift`, `CHANGELOG.md`, docs, and the signed `scripts/package-release` / notarized `scripts/package-notarized-pkg` outputs aligned.
 
 ## Quality Loop
 

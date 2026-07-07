@@ -1,4 +1,5 @@
 import Testing
+import Foundation
 @testable import beard
 
 @Test func parsesBatteryStatus() throws {
@@ -157,4 +158,114 @@ import Testing
 
     #expect(suggestions.contains { $0.contains("do not disable security tooling") })
     #expect(!suggestions.contains { $0.contains("Quit it") })
+}
+
+@Test func rulesFileMatchesEmbeddedDefaults() throws {
+    let testFile = URL(fileURLWithPath: #filePath)
+    let packageRoot = testFile
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+    let rulesURL = packageRoot.appendingPathComponent("rules/beard-rules.json")
+    let rulesFile = try SuggestionRules.decode(
+        Data(contentsOf: rulesURL),
+        sourceDescription: rulesURL.path
+    )
+    let embedded = try SuggestionRules.embeddedDefaults()
+
+    #expect(rulesFile == embedded)
+}
+
+@Test func categorizesKnownAppsFromRuleData() throws {
+    let rules = try SuggestionRules.embeddedDefaults()
+    let apps = ImpactAggregator.aggregate(
+        topProcesses: [
+            TopProcessMetric(pid: 1, command: "OrbStack Helper", cpuPercent: 30, relativePower: 31),
+            TopProcessMetric(pid: 2, command: "com.apple.WebKit", cpuPercent: 25, relativePower: 25),
+            TopProcessMetric(pid: 3, command: "MysteryApp", cpuPercent: 22, relativePower: 22),
+        ],
+        processCommands: [
+            1: "/Applications/OrbStack.app/Contents/MacOS/OrbStack",
+            2: "/System/Library/Frameworks/WebKit.framework/com.apple.WebKit.WebContent",
+            3: "/Applications/MysteryApp.app/Contents/MacOS/MysteryApp",
+        ],
+        limit: 8,
+        rules: rules
+    )
+
+    #expect(apps.first(where: { $0.name == "OrbStack" })?.category == "container-vm")
+    #expect(apps.first(where: { $0.name == "com.apple.WebKit.WebContent" })?.category == "browser")
+    #expect(apps.first(where: { $0.name == "MysteryApp" })?.category == nil)
+}
+
+@Test func explicitRulesCanAddMinimalCategoryOverlay() throws {
+    let directory = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: directory) }
+
+    let rulesPath = directory.appendingPathComponent("rules.json")
+    try """
+    {
+      "schemaVersion": 1,
+      "categories": [
+        {
+          "id": "minimal-tool",
+          "name": "Minimal tool",
+          "exactMatches": ["tinyhog"],
+          "containsMatches": [],
+          "suggestion": "{app} matched a minimal custom rule."
+        }
+      ]
+    }
+    """.write(to: rulesPath, atomically: true, encoding: .utf8)
+
+    let rules = try SuggestionRuleLoader.load(explicitPath: rulesPath.path, environment: [:])
+
+    #expect(rules.highImpactThreshold == 20)
+    #expect(rules.matchingCategory(for: AppImpact(name: "tinyhog", relativePower: 30, cpuPercent: 30, processCount: 1, pids: [123], processNames: ["tinyhog"]))?.id == "minimal-tool")
+}
+
+@Test func usesGenericSuggestionForUnknownApps() throws {
+    let rules = try SuggestionRules.embeddedDefaults()
+    let suggestions = SuggestionEngine.suggestions(
+        battery: BatteryStatus(powerSource: "Battery Power", batteryID: nil, chargePercent: 80, state: "discharging", timeRemaining: "4:00"),
+        powerSettings: PowerSettings(batteryPowerMode: 1, lowPowerModeLikelyEnabled: true, displaySleepMinutes: 2, systemSleepMinutes: 1, diskSleepMinutes: 10),
+        apps: [
+            AppImpact(name: "MysteryApp", relativePower: 80, cpuPercent: 80, processCount: 1, pids: [123], processNames: ["MysteryApp"]),
+        ],
+        rules: rules
+    )
+
+    #expect(suggestions.contains { $0.contains("MysteryApp is using high current impact") && $0.contains("Quit it") })
+}
+
+@Test func overlaysExplicitRulesByCategoryID() throws {
+    let directory = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: directory) }
+
+    let rulesPath = directory.appendingPathComponent("rules.json")
+    try """
+    {
+      "schemaVersion": 1,
+      "highImpactThreshold": 5,
+      "genericSuggestion": "{app} custom generic.",
+      "categories": [
+        {
+          "id": "custom-tool",
+          "name": "Custom tool",
+          "exactMatches": [],
+          "containsMatches": ["mybatteryhog"],
+          "suggestion": "{app} matched a custom rule at {power} power."
+        }
+      ]
+    }
+    """.write(to: rulesPath, atomically: true, encoding: .utf8)
+
+    let rules = try SuggestionRuleLoader.load(explicitPath: rulesPath.path, environment: [:])
+    let app = AppImpact(name: "MyBatteryHog", relativePower: 6, cpuPercent: 6, processCount: 1, pids: [123], processNames: ["MyBatteryHog"])
+
+    #expect(rules.highImpactThreshold == 5)
+    #expect(rules.matchingCategory(for: app)?.id == "custom-tool")
+    #expect(rules.matchingCategory(for: AppImpact(name: "Safari", relativePower: 6, cpuPercent: 6, processCount: 1, pids: [456], processNames: ["Safari"]))?.id == "browser")
 }

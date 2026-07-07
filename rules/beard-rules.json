@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "highImpactThreshold": 20,
+  "genericSuggestion": "{app} is using high current impact (power {power}, CPU {cpu}%). Quit it, pause active work, or stop background tasks if you do not need it on battery.",
+  "categories": [
+    {
+      "id": "security",
+      "name": "Security tooling",
+      "exactMatches": [
+        "microsoft defender"
+      ],
+      "containsMatches": [
+        "wdavdaemon",
+        "defender",
+        "endpointsecurity",
+        "epsext",
+        "crowdstrike",
+        "falcon",
+        "sentinelone",
+        "jamfprotect"
+      ],
+      "suggestion": "{app} is using high current impact (power {power}, CPU {cpu}%). Check for an active scan or update, but do not disable security tooling just to save battery."
+    },
+    {
+      "id": "system-display",
+      "name": "Display server",
+      "exactMatches": [
+        "windowserver"
+      ],
+      "containsMatches": [],
+      "suggestion": "{app} is using high current impact (power {power}, CPU {cpu}%). Lower brightness, disconnect extra displays, or close graphics-heavy windows."
+    },
+    {
+      "id": "thermal-system",
+      "name": "Thermal management",
+      "exactMatches": [
+        "kernel_task"
+      ],
+      "containsMatches": [],
+      "suggestion": "{app} is using high current impact (power {power}, CPU {cpu}%). Reduce heat or stop other high-CPU work so macOS can leave thermal management sooner."
+    },
+    {
+      "id": "browser",
+      "name": "Browser or web content",
+      "exactMatches": [
+        "arc",
+        "brave",
+        "firefox",
+        "safari"
+      ],
+      "containsMatches": [
+        "webkit",
+        "safari",
+        "chrome",
+        "firefox",
+        "brave",
+        "microsoft edge"
+      ],
+      "suggestion": "{app} is using high current impact (power {power}, CPU {cpu}%). Close or pause browser tabs, video, calls, or heavy web apps you do not need on battery."
+    },
+    {
+      "id": "container-vm",
+      "name": "Containers or virtual machines",
+      "exactMatches": [],
+      "containsMatches": [
+        "orbstack",
+        "docker",
+        "colima",
+        "podman",
+        "qemu",
+        "virtualbox",
+        "vmware",
+        "parallels"
+      ],
+      "suggestion": "{app} is using high current impact (power {power}, CPU {cpu}%). Stop local containers or VMs you do not need on battery."
+    },
+    {
+      "id": "ide-build",
+      "name": "Developer tools or builds",
+      "exactMatches": [
+        "cmux",
+        "copilot",
+        "git",
+        "go",
+        "java",
+        "node",
+        "python",
+        "ruby",
+        "swift"
+      ],
+      "containsMatches": [
+        "xcode",
+        "visual studio code",
+        "code - insiders",
+        "clang",
+        "npm",
+        "bun",
+        "gradle",
+        "cargo",
+        "rustc",
+        "git-remote",
+        "copilot",
+        "cmux"
+      ],
+      "suggestion": "{app} is using high current impact (power {power}, CPU {cpu}%). Pause builds, indexing, agent sessions, or background developer tasks you do not need on battery."
+    },
+    {
+      "id": "chat-call",
+      "name": "Chat or calls",
+      "exactMatches": [
+        "discord",
+        "slack",
+        "zoom"
+      ],
+      "containsMatches": [
+        "slack",
+        "zoom",
+        "teams",
+        "discord",
+        "webex"
+      ],
+      "suggestion": "{app} is using high current impact (power {power}, CPU {cpu}%). Leave calls, pause screen sharing, or quit chat helpers you do not need on battery."
+    },
+    {
+      "id": "media",
+      "name": "Media processing",
+      "exactMatches": [],
+      "containsMatches": [
+        "mediaanalysisd",
+        "photo",
+        "vtdecoder",
+        "quicktime",
+        "music",
+        "spotify",
+        "youtube"
+      ],
+      "suggestion": "{app} is using high current impact (power {power}, CPU {cpu}%). Pause media playback, video processing, or photo analysis until you are on power."
+    },
+    {
+      "id": "sync-storage",
+      "name": "Sync or storage",
+      "exactMatches": [],
+      "containsMatches": [
+        "dropbox",
+        "onedrive",
+        "icloud",
+        "bird",
+        "cloudd",
+        "fileprovider",
+        "googledrive"
+      ],
+      "suggestion": "{app} is using high current impact (power {power}, CPU {cpu}%). Pause sync-heavy work or let file syncing finish while plugged in."
+    },
+    {
+      "id": "device-management",
+      "name": "Device management",
+      "exactMatches": [
+        "jamf"
+      ],
+      "containsMatches": [
+        "jamf"
+      ],
+      "suggestion": "{app} is using high current impact (power {power}, CPU {cpu}%). Check whether device management is installing updates or running inventory; do not disable required management tooling."
+    }
+  ]
+}

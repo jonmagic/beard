@@ -25,6 +25,8 @@ struct TopProcessMetric: Equatable {
 
 struct AppImpact: Codable, Equatable {
     let name: String
+    var category: String? = nil
+    var categoryName: String? = nil
     let relativePower: Double
     let cpuPercent: Double
     let processCount: Int

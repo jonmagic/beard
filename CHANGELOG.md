@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.0 - Category-based suggestions
+
+- Replaced hard-coded app-specific suggestion logic with category rules.
+- Added built-in categories for browsers, containers/VMs, developer tools, chat/calls, media, sync/storage, security tooling, device management, display, and thermal management.
+- Added category metadata to JSON reports so agents can provide richer coaching.
+- Added `--rules PATH`, `BEARD_RULES_PATH`, and `~/.config/beard/rules.json` support for custom rule overlays.
+- Added `rules/beard-rules.json` as the editable starting point for custom rules.
+
 ## 1.0.3 - New-user coaching docs
 
 - Linked Simon Willison's `llm` project from the always-on coaching docs.

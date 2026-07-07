@@ -58,6 +58,8 @@ Output can include local process names and PIDs. Keep reports local unless jonma
 
 Beard should not install or own background scheduling. Keep recurring checks in the user's local agent, scheduler, or operating environment. `prompts/local-agent-battery-coach.md` is the supported handoff for spoken coaching loops using `llm`, `say`, `relay`, or another local notifier.
 
+Suggestion behavior is data-driven. Keep embedded defaults in `Sources/beard/SuggestionRules.swift` and `rules/beard-rules.json` aligned; tests assert the decoded contents match. User rules overlay defaults by category `id`.
+
 `VERSION` and `Sources/beard/Version.swift` must stay aligned for releases. `scripts/package-release` builds, signs, verifies, and writes the local zip archive under `dist/`. `scripts/package-notarized-pkg` builds, signs, notarizes, staples, validates, and writes the Gatekeeper-friendly installer package under `dist/`.
 
 ## Agent Workflow

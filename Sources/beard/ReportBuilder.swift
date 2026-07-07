@@ -16,6 +16,7 @@ struct ReportBuilder {
             ]
         )
         let processOutput = try commandRunner.run("/bin/ps", arguments: ["axww", "-o", "pid=", "-o", "command="])
+        let suggestionRules = try SuggestionRuleLoader.load(explicitPath: options.rulesPath)
 
         let battery = try Parsers.parseBatteryStatus(batteryOutput)
         let settings = Parsers.parsePowerSettings(settingsOutput)
@@ -29,16 +30,18 @@ struct ReportBuilder {
         let apps = ImpactAggregator.aggregate(
             topProcesses: topProcesses,
             processCommands: processCommands,
-            limit: options.limit
+            limit: options.limit,
+            rules: suggestionRules
         )
         let suggestions = SuggestionEngine.suggestions(
             battery: battery,
             powerSettings: settings,
-            apps: apps
+            apps: apps,
+            rules: suggestionRules
         )
 
         return BatteryReport(
-            schemaVersion: 1,
+            schemaVersion: 2,
             generatedAt: ISO8601DateFormatter().string(from: Date()),
             sample: ReportSample(
                 usableSamples: usableTopSamples.count,
@@ -78,7 +81,7 @@ enum ImpactAggregator {
             }
     }
 
-    static func aggregate(topProcesses: [TopProcessMetric], processCommands: [Int: String], limit: Int) -> [AppImpact] {
+    static func aggregate(topProcesses: [TopProcessMetric], processCommands: [Int: String], limit: Int, rules: SuggestionRules? = nil) -> [AppImpact] {
         var buckets: [String: ImpactBucket] = [:]
 
         for process in topProcesses where process.cpuPercent > 0 || process.relativePower > 0 {
@@ -89,7 +92,7 @@ enum ImpactAggregator {
             buckets[name, default: ImpactBucket(name: name)].add(process)
         }
 
-        return buckets.values
+        let apps = buckets.values
             .map { $0.impact }
             .sorted {
                 if $0.relativePower == $1.relativePower {
@@ -99,6 +102,14 @@ enum ImpactAggregator {
             }
             .prefix(limit)
             .map { $0 }
+
+        guard let rules else {
+            return apps
+        }
+
+        return apps.map { app in
+            app.categorized(by: rules.matchingCategory(for: app))
+        }
     }
 
     static func displayName(commandLine: String?, fallback: String) -> String {
@@ -179,15 +190,21 @@ private struct ImpactBucket {
 }
 
 enum SuggestionEngine {
-    static func suggestions(battery: BatteryStatus, powerSettings: PowerSettings, apps: [AppImpact]) -> [String] {
+    static func suggestions(battery: BatteryStatus, powerSettings: PowerSettings, apps: [AppImpact], rules: SuggestionRules? = nil) -> [String] {
         var suggestions: [String] = []
+        let suggestionRules: SuggestionRules
+        if let rules {
+            suggestionRules = rules
+        } else {
+            suggestionRules = (try? SuggestionRules.embeddedDefaults()) ?? fallbackRules()
+        }
 
         if let state = battery.state, !state.localizedCaseInsensitiveContains("discharging") {
             suggestions.append("You are not currently discharging; rankings still show current relative app impact.")
         }
 
-        for app in apps.prefix(3) where app.relativePower >= 20 || app.cpuPercent >= 20 {
-            suggestions.append(highImpactSuggestion(for: app))
+        for app in apps.prefix(3) where app.relativePower >= suggestionRules.highImpactThreshold || app.cpuPercent >= suggestionRules.highImpactThreshold {
+            suggestions.append(highImpactSuggestion(for: app, rules: suggestionRules))
         }
 
         if apps.isEmpty {
@@ -218,32 +235,26 @@ enum SuggestionEngine {
         return suggestions
     }
 
-    private static func highImpactSuggestion(for app: AppImpact) -> String {
-        let metric = "\(app.name) is using high current impact (power \(app.relativePower), CPU \(app.cpuPercent)%)."
-        let normalizedName = app.name.lowercased()
-        let normalizedProcesses = app.processNames.joined(separator: " ").lowercased()
+    private static func highImpactSuggestion(for app: AppImpact, rules: SuggestionRules) -> String {
+        let category = rules.matchingCategory(for: app)
+        let template = category?.suggestion ?? rules.genericSuggestion
+        return render(template: template, app: app)
+    }
 
-        if normalizedName.contains("defender") || normalizedProcesses.contains("wdavdaemon") {
-            return "\(metric) Check for an active scan or update, but do not disable security tooling just to save battery."
-        }
+    private static func render(template: String, app: AppImpact) -> String {
+        template
+            .replacingOccurrences(of: "{app}", with: app.name)
+            .replacingOccurrences(of: "{power}", with: String(format: "%.1f", app.relativePower))
+            .replacingOccurrences(of: "{cpu}", with: String(format: "%.1f", app.cpuPercent))
+    }
 
-        if normalizedName == "windowserver" {
-            return "\(metric) Lower brightness, disconnect extra displays, or close graphics-heavy windows."
-        }
-
-        if normalizedName == "kernel_task" {
-            return "\(metric) Reduce heat or stop other high-CPU work so macOS can leave thermal management sooner."
-        }
-
-        if normalizedName.contains("webkit") || normalizedName.contains("safari") || normalizedName.contains("chrome") || normalizedName.contains("firefox") {
-            return "\(metric) Close or pause browser tabs, video, calls, or heavy web apps you do not need on battery."
-        }
-
-        if normalizedName.contains("orbstack") || normalizedName.contains("docker") {
-            return "\(metric) Stop local containers or VMs you do not need on battery."
-        }
-
-        return "\(metric) Quit it, pause active work, or stop background tasks if you do not need it on battery."
+    private static func fallbackRules() -> SuggestionRules {
+        SuggestionRules(
+            schemaVersion: 1,
+            highImpactThreshold: 20,
+            genericSuggestion: "{app} is using high current impact (power {power}, CPU {cpu}%). Quit it, pause active work, or stop background tasks if you do not need it on battery.",
+            categories: []
+        )
     }
 }
 

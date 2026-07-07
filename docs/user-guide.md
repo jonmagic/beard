@@ -6,7 +6,7 @@ The name is a Coach Beard joke: "Battery Coach" made jonmagic think of Coach Bea
 
 ## Install from a release download
 
-The easiest path is the notarized installer package. Double-click `Beard-1.0.3-macos-arm64.pkg`, follow the installer, then open a new terminal and run:
+The easiest path is the notarized installer package. Double-click `Beard-1.1.0-macos-arm64.pkg`, follow the installer, then open a new terminal and run:
 
 ```sh
 beard --version
@@ -18,7 +18,7 @@ The package installs `beard` to `/usr/local/bin/beard`.
 For scripted installs, use:
 
 ```sh
-sudo installer -pkg Beard-1.0.3-macos-arm64.pkg -target /
+sudo installer -pkg Beard-1.1.0-macos-arm64.pkg -target /
 ```
 
 ## Install from the zip
@@ -26,8 +26,8 @@ sudo installer -pkg Beard-1.0.3-macos-arm64.pkg -target /
 Download the macOS arm64 zip, unzip it, and copy the binary somewhere on your `PATH`.
 
 ```sh
-unzip Beard-1.0.3-macos-arm64.zip
-sudo cp Beard-1.0.3-macos-arm64/beard /usr/local/bin/beard
+unzip Beard-1.1.0-macos-arm64.zip
+sudo cp Beard-1.1.0-macos-arm64/beard /usr/local/bin/beard
 beard --version
 beard report --limit 5
 ```
@@ -37,7 +37,7 @@ The zip release binary is signed with Jonathan Hoyt's Developer ID Application c
 If macOS blocks the binary after download, remove quarantine from the extracted release folder before copying it into place:
 
 ```sh
-xattr -dr com.apple.quarantine Beard-1.0.3-macos-arm64
+xattr -dr com.apple.quarantine Beard-1.1.0-macos-arm64
 ```
 
 ## Run from source
@@ -53,13 +53,33 @@ swift run beard report --json --samples 3 --interval 1
 
 Beard reports relative current impact, not watts or watt-hours. On Apple Silicon, the power score often tracks CPU impact closely.
 
-The top app/process list is best used as a coaching signal:
+The top app/process list is best used as a coaching signal. Beard also assigns a category when a rule matches:
 
 - **Copilot**: pause or close extra agent sessions if you are on battery.
 - **OrbStack**: stop unused containers or VMs.
 - **Safari/WebKit**: close live dashboards, social feeds, video/calls, Office web docs, or heavy GitHub diffs.
 - **Microsoft Defender**: check for an active scan or update, but do not disable security tooling just to save battery.
 - **WindowServer**: reduce brightness, disconnect extra displays, or close graphics-heavy windows.
+
+In text output, categories appear next to the app name, such as `OrbStack [container-vm]`. In JSON output, each app can include `category` and `categoryName`.
+
+## Customize suggestion rules
+
+Beard has embedded defaults, so it still works if no rules file exists. To customize the advice for your own apps, start from the built-in rules file:
+
+```sh
+mkdir -p ~/.config/beard
+cp rules/beard-rules.json ~/.config/beard/rules.json
+```
+
+Then edit `~/.config/beard/rules.json`. A category rule has an `id`, display `name`, `exactMatches`, `containsMatches`, and a `suggestion` template. Templates can use `{app}`, `{power}`, and `{cpu}`.
+
+User rules overlay Beard's embedded defaults by `id`. If your auto-loaded `~/.config/beard/rules.json` is invalid, Beard warns on stderr and falls back to embedded defaults so reports keep working. If you pass a rules file explicitly, invalid rules fail fast:
+
+```sh
+beard report --rules ~/.config/beard/rules.json
+BEARD_RULES_PATH=~/.config/beard/rules.json beard report
+```
 
 ## Instruct your agent to make Beard feel always-on
 

@@ -22,7 +22,8 @@ enum TextRenderer {
             lines.append("  No active app/process impact found in this sample.")
         } else {
             for (index, app) in report.apps.enumerated() {
-                let paddedName = app.name.count < 28 ? app.name.padding(toLength: 28, withPad: " ", startingAt: 0) : app.name
+                let appName = app.category.map { "\(app.name) [\($0)]" } ?? app.name
+                let paddedName = appName.count < 28 ? appName.padding(toLength: 28, withPad: " ", startingAt: 0) : appName
                 let pidList = app.pids.map(String.init).joined(separator: ",")
                 lines.append(String(format: "  %2d. %@ power %6.1f  cpu %6.1f%%  pids %@", index + 1, paddedName, app.relativePower, app.cpuPercent, pidList))
             }
