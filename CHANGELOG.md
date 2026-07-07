@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.2 - Install and agent-coach docs
+
+- Made double-clicking the notarized pkg the primary install path.
+- Removed the repository self-link from the README.
+- Reframed always-on coaching as instructions for a local AI agent.
+
 ## 1.0.1 - Installed binary docs
 
 - Updated the README and user guide to make installed `beard` commands the primary user path.

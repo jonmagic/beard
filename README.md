@@ -4,19 +4,13 @@ Beard is a local macOS CLI that samples current per-app/process energy signals a
 
 It uses Apple-provided command-line tools (`pmset`, `top`, and `ps`) through absolute paths, keeps data local, and writes reports only to stdout.
 
-The name is a Coach Beard joke. "Battery Coach" immediately made me think of Beard from *Ted Lasso*, so the little battery coach became `beard`.
-
-Source: <https://github.com/jonmagic/beard>
+The name is a Coach Beard joke. "Battery Coach" immediately made me think of Coach Beard from *Ted Lasso*, so the little battery coach became `beard`.
 
 ## Install
 
-Download the notarized macOS installer from the latest release, then install it:
+Download the notarized macOS installer from the latest release, double-click it, and follow the installer. It installs `beard` to `/usr/local/bin/beard`.
 
-```sh
-sudo installer -pkg Beard-1.0.1-macos-arm64.pkg -target /
-```
-
-The installer puts the binary at `/usr/local/bin/beard`.
+For scripted installs, you can also run `sudo installer -pkg Beard-<version>-macos-arm64.pkg -target /`.
 
 ## Usage
 
@@ -81,13 +75,26 @@ The zip artifact is written to `dist/Beard-<version>-macos-arm64.zip` with a mat
 
 The installer package signs the `beard` binary with Jonathan Hoyt's Developer ID Application certificate, signs the package with the Developer ID Installer certificate, submits it to Apple notarization, staples the accepted ticket, and validates it with Gatekeeper.
 
-## Local agent battery coaching
+## Instruct your agent to make Beard always-on
 
-Beard intentionally does not install a scheduler, background job, or LaunchAgent. It is just the local signal source.
+Beard is deliberately just the local signal source. To make it feel like an always-running battery coach, give your AI agent a recurring instruction that decides when to run Beard and how to speak the result.
 
-The useful loop is for your local AI agent to run `beard report --json`, summarize it with whatever LLM path you already use, and speak or enqueue the result with your preferred local tool, such as `say` or Tri-State Relay Service. TSRS is described at <https://jonmagic.com/tsrs/>.
+Give your agent an instruction like this:
 
-Use [`prompts/local-agent-battery-coach.md`](prompts/local-agent-battery-coach.md) as the prompt for that agent. If your agent sends Beard output to an external LLM provider, process names and battery state may leave the machine according to that provider's behavior.
+```text
+Every 15 minutes while I am on battery, run:
+
+beard report --json --samples 2 --interval 1 --limit 8
+
+If the Mac is plugged into power, skip the update. Otherwise, summarize the
+biggest current drains in one short coaching note and speak it with my configured
+local notifier. Use my normal LLM path if you need one, and keep the spoken
+message short enough for my notifier.
+```
+
+Your agent can use `llm --no-log` for the summary and `say`, `relay`, or another local notifier for the audio. Tri-State Relay Service is documented at <https://jonmagic.com/tsrs/>.
+
+Use [`prompts/local-agent-battery-coach.md`](prompts/local-agent-battery-coach.md) as the longer reusable prompt for that agent. If your agent sends Beard output to an external LLM provider, process names and battery state may leave the machine according to that provider's behavior.
 
 ## License
 

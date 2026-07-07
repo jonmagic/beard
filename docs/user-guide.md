@@ -2,27 +2,32 @@
 
 Beard is a local macOS battery coach. It samples current app/process impact and explains what looks expensive. Your local AI agent can use Beard's JSON output to speak short coaching updates through `say`, Tri-State Relay Service, or another local notifier.
 
-The name is a Coach Beard joke: "Battery Coach" made jonmagic think of Beard from *Ted Lasso*.
+The name is a Coach Beard joke: "Battery Coach" made jonmagic think of Coach Beard from *Ted Lasso*.
 
 ## Install from a release download
 
-The easiest path is the notarized installer package:
+The easiest path is the notarized installer package. Double-click `Beard-1.0.2-macos-arm64.pkg`, follow the installer, then open a new terminal and run:
 
 ```sh
-sudo installer -pkg Beard-1.0.1-macos-arm64.pkg -target /
 beard --version
 beard report --limit 5
 ```
 
 The package installs `beard` to `/usr/local/bin/beard`.
 
+For scripted installs, use:
+
+```sh
+sudo installer -pkg Beard-1.0.2-macos-arm64.pkg -target /
+```
+
 ## Install from the zip
 
 Download the macOS arm64 zip, unzip it, and copy the binary somewhere on your `PATH`.
 
 ```sh
-unzip Beard-1.0.1-macos-arm64.zip
-sudo cp Beard-1.0.1-macos-arm64/beard /usr/local/bin/beard
+unzip Beard-1.0.2-macos-arm64.zip
+sudo cp Beard-1.0.2-macos-arm64/beard /usr/local/bin/beard
 beard --version
 beard report --limit 5
 ```
@@ -32,7 +37,7 @@ The zip release binary is signed with Jonathan Hoyt's Developer ID Application c
 If macOS blocks the binary after download, remove quarantine from the extracted release folder before copying it into place:
 
 ```sh
-xattr -dr com.apple.quarantine Beard-1.0.1-macos-arm64
+xattr -dr com.apple.quarantine Beard-1.0.2-macos-arm64
 ```
 
 ## Run from source
@@ -56,13 +61,16 @@ The top app/process list is best used as a coaching signal:
 - **Microsoft Defender**: check for an active scan or update, but do not disable security tooling just to save battery.
 - **WindowServer**: reduce brightness, disconnect extra displays, or close graphics-heavy windows.
 
-## Spoken battery coaching with your agent
+## Instruct your agent to make Beard feel always-on
 
-Beard does not install or manage a LaunchAgent. Use your local AI agent or scheduler to decide when to run it. The intended loop is:
+Beard does not install or manage a LaunchAgent. Instead, instruct your local AI agent to use Beard as the battery signal source, choose the cadence, and decide how to speak the result.
 
-1. Runs the release Beard binary with `report --json`.
-2. Summarize the JSON with your chosen local agent or LLM path.
-3. Speak or enqueue the short result through `say`, `relay`, or another local notifier.
+Use this shape:
+
+1. Every 15 minutes, run `beard report --json --samples 2 --interval 1 --limit 8`.
+2. If the Mac is plugged into power, skip the update.
+3. If the Mac is on battery, summarize the top drains in one short coaching note.
+4. Speak or enqueue the note through the user's configured notifier: `say`, `relay`, or something else.
 
 Tri-State Relay Service is documented at <https://jonmagic.com/tsrs/>.
 
