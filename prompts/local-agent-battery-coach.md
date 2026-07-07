@@ -7,8 +7,11 @@ You are monitoring macOS battery usage with Beard. Observe and report only. Do n
 ## Inputs
 
 - Beard CLI: `beard`
-- Optional LLM summarizer: use the user's configured `llm` command if the agent has one.
-- Optional speaking tool: use the user's configured speech path, such as `say`, `relay`, or another local notifier.
+- Optional LLM summarizer: use the user's configured `llm` command if the agent has one. `llm` is Simon Willison's command-line tool for working with LLMs: https://github.com/simonw/llm
+- Optional speaking tool: use the user's configured speech path.
+  - `say` is the built-in macOS text-to-speech command.
+  - `relay` is the Tri-State Relay Service CLI, a richer replacement for `say` when the user wants queued updates, focus/ready controls, and project lines. TSRS is documented at https://jonmagic.com/tsrs/
+  - If neither exists, return the short update as text.
 
 ## Steps
 

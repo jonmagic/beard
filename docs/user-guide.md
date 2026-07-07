@@ -6,7 +6,7 @@ The name is a Coach Beard joke: "Battery Coach" made jonmagic think of Coach Bea
 
 ## Install from a release download
 
-The easiest path is the notarized installer package. Double-click `Beard-1.0.2-macos-arm64.pkg`, follow the installer, then open a new terminal and run:
+The easiest path is the notarized installer package. Double-click `Beard-1.0.3-macos-arm64.pkg`, follow the installer, then open a new terminal and run:
 
 ```sh
 beard --version
@@ -18,7 +18,7 @@ The package installs `beard` to `/usr/local/bin/beard`.
 For scripted installs, use:
 
 ```sh
-sudo installer -pkg Beard-1.0.2-macos-arm64.pkg -target /
+sudo installer -pkg Beard-1.0.3-macos-arm64.pkg -target /
 ```
 
 ## Install from the zip
@@ -26,8 +26,8 @@ sudo installer -pkg Beard-1.0.2-macos-arm64.pkg -target /
 Download the macOS arm64 zip, unzip it, and copy the binary somewhere on your `PATH`.
 
 ```sh
-unzip Beard-1.0.2-macos-arm64.zip
-sudo cp Beard-1.0.2-macos-arm64/beard /usr/local/bin/beard
+unzip Beard-1.0.3-macos-arm64.zip
+sudo cp Beard-1.0.3-macos-arm64/beard /usr/local/bin/beard
 beard --version
 beard report --limit 5
 ```
@@ -37,7 +37,7 @@ The zip release binary is signed with Jonathan Hoyt's Developer ID Application c
 If macOS blocks the binary after download, remove quarantine from the extracted release folder before copying it into place:
 
 ```sh
-xattr -dr com.apple.quarantine Beard-1.0.2-macos-arm64
+xattr -dr com.apple.quarantine Beard-1.0.3-macos-arm64
 ```
 
 ## Run from source
@@ -65,6 +65,12 @@ The top app/process list is best used as a coaching signal:
 
 Beard does not install or manage a LaunchAgent. Instead, instruct your local AI agent to use Beard as the battery signal source, choose the cadence, and decide how to speak the result.
 
+There are three optional pieces around Beard:
+
+- [`llm`](https://github.com/simonw/llm): Simon Willison's command-line tool for sending the Beard JSON report to an LLM.
+- `say`: the built-in macOS speech command. This is the simplest way to hear a short update.
+- `relay`: the Tri-State Relay Service CLI. Use this instead of `say` when you want a queue, focus/ready controls, project lines, and a better agent-update experience. TSRS is documented at <https://jonmagic.com/tsrs/>.
+
 Use this shape:
 
 1. Every 15 minutes, run `beard report --json --samples 2 --interval 1 --limit 8`.
@@ -72,13 +78,13 @@ Use this shape:
 3. If the Mac is on battery, summarize the top drains in one short coaching note.
 4. Speak or enqueue the note through the user's configured notifier: `say`, `relay`, or something else.
 
-Tri-State Relay Service is documented at <https://jonmagic.com/tsrs/>.
-
 Use the agent prompt in `prompts/local-agent-battery-coach.md`. A minimal manual version looks like:
 
 ```sh
 beard report --json --samples 2 --interval 1 --limit 8 | llm --no-log -s "Turn this Beard battery report into one short spoken coaching update under 240 characters."
 ```
+
+That produces text. To hear it, pipe the result into `say` or have your agent enqueue it with `relay`.
 
 ## Privacy notes
 

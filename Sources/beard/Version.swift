@@ -1,3 +1,3 @@
 enum BeardVersion {
-    static let current = "1.0.2"
+    static let current = "1.0.3"
 }

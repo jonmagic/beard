@@ -79,6 +79,13 @@ The installer package signs the `beard` binary with Jonathan Hoyt's Developer ID
 
 Beard is deliberately just the local signal source. To make it feel like an always-running battery coach, give your AI agent a recurring instruction that decides when to run Beard and how to speak the result.
 
+The pieces are:
+
+- **Beard**: gathers the local battery/process signal.
+- **[`llm`](https://github.com/simonw/llm)**: Simon Willison's CLI for sending the JSON report to an LLM and getting a short coaching sentence back.
+- **`say`**: the built-in macOS text-to-speech command, useful for the simplest spoken version.
+- **`relay`**: the Tri-State Relay Service CLI. It is a nicer replacement for `say` when you want queued updates, focus/ready controls, lines, and more control over how agent updates are spoken. TSRS is documented at <https://jonmagic.com/tsrs/>.
+
 Give your agent an instruction like this:
 
 ```text
@@ -92,7 +99,7 @@ local notifier. Use my normal LLM path if you need one, and keep the spoken
 message short enough for my notifier.
 ```
 
-Your agent can use `llm --no-log` for the summary and `say`, `relay`, or another local notifier for the audio. Tri-State Relay Service is documented at <https://jonmagic.com/tsrs/>.
+For example, an agent could summarize with `llm --no-log` and then speak with `say` for the basic version, or enqueue the message with `relay --line "beard" --type update --message "..."` for the TSRS version.
 
 Use [`prompts/local-agent-battery-coach.md`](prompts/local-agent-battery-coach.md) as the longer reusable prompt for that agent. If your agent sends Beard output to an external LLM provider, process names and battery state may leave the machine according to that provider's behavior.
 

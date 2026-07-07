@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.3 - New-user coaching docs
+
+- Linked Simon Willison's `llm` project from the always-on coaching docs.
+- Explained `say` as the built-in macOS speech path and `relay` as the Tri-State Relay Service option for richer spoken updates.
+- Tightened the agent prompt so new users can understand the moving parts.
+
 ## 1.0.2 - Install and agent-coach docs
 
 - Made double-clicking the notarized pkg the primary install path.
