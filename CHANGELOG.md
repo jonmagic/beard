@@ -14,6 +14,7 @@
 - Linked Simon Willison's `llm` project from the always-on coaching docs.
 - Explained `say` as the built-in macOS speech path and `relay` as the Tri-State Relay Service option for richer spoken updates.
 - Tightened the agent prompt so new users can understand the moving parts.
+- Clarified that agents should help set up the local loop rather than own it.
 
 ## 1.0.2 - Install and agent-coach docs
 

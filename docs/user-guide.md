@@ -119,9 +119,9 @@ BEARD_RULES_PATH=~/.config/beard/rules.json beard report
 
 The full built-in rules file is available in the source repository and in the zip release as `rules/beard-rules.json`, but you do not need to copy it just to add one custom category.
 
-## Instruct your agent to make Beard feel always-on
+## Ask your agent to make Beard feel always-on
 
-Beard does not install or manage a LaunchAgent. Instead, instruct your local AI agent to use Beard as the battery signal source, choose the cadence, and decide how to speak the result.
+Beard does not install or manage a LaunchAgent. Instead, ask your local AI agent to help set up whatever local loop you want. The agent can write the launchd job, cron entry, shell script, or Shortcut, and it can glue Beard to `llm`, `say`, `relay`, or another notifier.
 
 There are three optional pieces around Beard:
 
@@ -131,10 +131,12 @@ There are three optional pieces around Beard:
 
 Use this shape:
 
-1. Every 15 minutes, run `beard report --json --samples 2 --interval 1 --limit 8`.
-2. If the Mac is plugged into power, skip the update.
-3. If the Mac is on battery, summarize the top drains in one short coaching note.
-4. Speak or enqueue the note through the user's configured notifier: `say`, `relay`, or something else.
+1. Ask the agent to propose the local loop before it creates anything.
+2. Use `beard report --json --samples 2 --interval 1 --limit 8` as the signal.
+3. If the Mac is plugged into power, skip the update.
+4. If the Mac is on battery, summarize the top drains in one short coaching note.
+5. Speak or enqueue the note through the configured notifier: `say`, `relay`, or something else.
+6. Ask the agent to show you how to disable or remove the setup.
 
 Use the agent prompt in `prompts/local-agent-battery-coach.md`. A minimal manual version looks like:
 

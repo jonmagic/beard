@@ -83,9 +83,9 @@ The zip artifact is written to `dist/Beard-<version>-macos-arm64.zip` with a mat
 
 The installer package signs the `beard` binary with Jonathan Hoyt's Developer ID Application certificate, signs the package with the Developer ID Installer certificate, submits it to Apple notarization, staples the accepted ticket, and validates it with Gatekeeper.
 
-## Instruct your agent to make Beard always-on
+## Ask your agent to set up an always-on coach
 
-Beard is deliberately just the local signal source. To make it feel like an always-running battery coach, give your AI agent a recurring instruction that decides when to run Beard and how to speak the result.
+Beard is deliberately just the local signal source. To make it feel like an always-running battery coach, ask your AI agent to help set up the local loop that runs Beard, summarizes the report, and speaks or queues the result.
 
 The pieces are:
 
@@ -97,19 +97,22 @@ The pieces are:
 Give your agent an instruction like this:
 
 ```text
-Every 15 minutes while I am on battery, run:
+Help me set up a local battery coach that runs every 15 minutes while I am on
+battery power.
 
-beard report --json --samples 2 --interval 1 --limit 8
+Use `beard report --json --samples 2 --interval 1 --limit 8` as the signal.
+If the Mac is plugged into power, skip the update.
 
-If the Mac is plugged into power, skip the update. Otherwise, summarize the
-biggest current drains in one short coaching note and speak it with my configured
-local notifier. Use my normal LLM path if you need one, and keep the spoken
-message short enough for my notifier.
+Summarize the biggest current drains in one short coaching note. Use my normal
+`llm` command if you need a model call. Speak with `say` for the simple version
+or enqueue with `relay --line "beard"` if Tri-State Relay Service is installed.
+
+Show me the files or commands you create, and make the setup easy to remove.
 ```
 
-For example, an agent could summarize with `llm --no-log` and then speak with `say` for the basic version, or enqueue the message with `relay --line "beard" --type update --message "..."` for the TSRS version.
+For example, an agent could create a launchd job that summarizes with `llm --no-log` and then speaks with `say`, or enqueue the message with `relay --line "beard" --type update --message "..."` for the TSRS version. The point is that Beard stays a CLI and the recurring automation lives in your local setup.
 
-Use [`prompts/local-agent-battery-coach.md`](prompts/local-agent-battery-coach.md) as the longer reusable prompt for that agent. If your agent sends Beard output to an external LLM provider, process names and battery state may leave the machine according to that provider's behavior.
+Use [`prompts/local-agent-battery-coach.md`](prompts/local-agent-battery-coach.md) as the longer reusable prompt for that setup work. If your agent sends Beard output to an external LLM provider, process names and battery state may leave the machine according to that provider's behavior.
 
 ## License
 
