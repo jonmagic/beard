@@ -2,7 +2,7 @@
 
 Beard is a local macOS battery coach. It samples current app/process impact and explains what looks expensive. Your local AI agent can use Beard's JSON output to speak short coaching updates through `say`, Tri-State Relay Service, or another local notifier.
 
-The name is a Coach Beard joke: "Battery Coach" made jonmagic think of Coach Beard from *Ted Lasso*.
+The name is a Coach Beard joke: thinking of it as "Coach Battery" made jonmagic jump to Coach Beard from *Ted Lasso*.
 
 ## Install from a release download
 

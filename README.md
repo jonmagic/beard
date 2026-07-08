@@ -4,7 +4,7 @@ Beard is a local macOS CLI that samples current per-app/process energy signals a
 
 It uses Apple-provided command-line tools (`pmset`, `top`, and `ps`) through absolute paths, keeps data local, and writes reports only to stdout.
 
-The name is a Coach Beard joke. "Battery Coach" immediately made me think of Coach Beard from *Ted Lasso*, so the little battery coach became `beard`.
+The name is a Coach Beard joke. Thinking of it as "Coach Battery" made me jump to Coach Beard from *Ted Lasso*, so the little battery coach became `beard`.
 
 ## Install
 
